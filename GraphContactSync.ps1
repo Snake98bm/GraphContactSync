@@ -26,11 +26,11 @@
 .PARAMETER Categories
     Optional array of categories to assign to contacts.
 .PARAMETER NoJobTitle
-    Optional. When specified, includes users with no Job Title (default behaviour excludes them).
+    Optional. When specified, excludes users with no Job Title (default behaviour includes them).
 .PARAMETER NoEmployeeId
-    Optional. When specified, includes users with no Employee ID (default behaviour excludes them).
+    Optional. When specified, excludes users with no Employee ID (default behaviour includes them).
 .PARAMETER NoMailbox
-    Optional. When specified, includes users with no Exchange mailbox (default behaviour excludes them).
+    Optional. When specified, excludes users with no Exchange mailbox (default behaviour includes them).
 #>
 
 param(    
