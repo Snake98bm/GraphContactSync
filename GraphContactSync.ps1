@@ -25,6 +25,12 @@
     The format for the FileAs field. Valid values are "FirstLast" (default) or "LastFirst".
 .PARAMETER Categories
     Optional array of categories to assign to contacts.
+.PARAMETER NoJobTitle
+    Optional. When specified, includes users with no Job Title (default behaviour excludes them).
+.PARAMETER NoEmployeeId
+    Optional. When specified, includes users with no Employee ID (default behaviour excludes them).
+.PARAMETER NoMailbox
+    Optional. When specified, includes users with no Exchange mailbox (default behaviour excludes them).
 #>
 
 param(    
@@ -38,7 +44,10 @@ param(
     [Parameter(Mandatory = $true)][string]$ManagedContactFolderName,
     [Parameter(Mandatory = $true)][string]$LogPath,
     [Parameter(Mandatory = $false)][ValidateSet("FirstLast", "LastFirst")][string]$FileAsFormat = "FirstLast",
-    [Parameter(Mandatory = $false)][string[]]$Categories = @()
+    [Parameter(Mandatory = $false)][string[]]$Categories = @(),
+    [Parameter(Mandatory = $false)][switch]$NoJobTitle,
+    [Parameter(Mandatory = $false)][switch]$NoEmployeeId,
+    [Parameter(Mandatory = $false)][switch]$NoMailbox
 )
 
 # Parameter validation
@@ -395,8 +404,11 @@ $UserList = Get-MgUser -Filter '(AccountEnabled eq true)' -All -Property `
 # Filter out users that are not members, have no job title, or are not in the address list
 #$FilteredOutUsers = $UserList | Where-Object UserType -ne 'Member' | Where-Object JobTitle -eq $null | Where-Object ShowInAddressList -in ($false, $null)
 #$UserList = $UserList | Where-Object UserType -eq 'Member' | Where-Object ShowInAddressList -ne $false | Where-Object JobTitle -ne $null
-$UserList = $UserList | Where-Object UserType -eq 'Member' | Where-Object ShowInAddressList -ne $false | Where-Object JobTitle -ne $null | Where-Object EmployeeId -ne $null
-
+#$UserList = $UserList | Where-Object UserType -eq 'Member' | Where-Object ShowInAddressList -ne $false | Where-Object JobTitle -ne $null | Where-Object EmployeeId -ne $null
+$UserList = $UserList | Where-Object UserType -eq 'Member' | Where-Object ShowInAddressList -ne $false
+if ($NoJobTitle)   { $UserList = $UserList | Where-Object { $_.JobTitle -ne $null } }
+if ($NoEmployeeId) { $UserList = $UserList | Where-Object { $_.EmployeeId -ne $null } }
+if ($NoMailbox)    { $UserList = $UserList | Where-Object { $_.Mail -ne $null } }
 $OrgContactList = Get-MgContact -All -Property `
     <#                                                        #>    Id, DisplayName, GivenName, Surname, CompanyName, JobTitle , Mail, Phones, Addresses
 | Select-Object @{Name = 'EntryType'; Expression = { 'Contact' } }, Id, DisplayName, GivenName, Surname, CompanyName, JobTitle , Mail, Phones, Addresses
