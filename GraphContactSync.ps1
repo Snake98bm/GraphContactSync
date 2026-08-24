@@ -25,6 +25,8 @@
     The format for the FileAs field. Valid values are "FirstLast" (default) or "LastFirst".
 .PARAMETER Categories
     Optional array of categories to assign to contacts.
+.PARAMETER DeleteOldFolderName
+    Optional Delete the folder with that name, useful for cleanup.
 #>
 
 param(    
@@ -38,7 +40,8 @@ param(
     [Parameter(Mandatory = $true)][string]$ManagedContactFolderName,
     [Parameter(Mandatory = $true)][string]$LogPath,
     [Parameter(Mandatory = $false)][ValidateSet("FirstLast", "LastFirst")][string]$FileAsFormat = "FirstLast",
-    [Parameter(Mandatory = $false)][string[]]$Categories = @()
+    [Parameter(Mandatory = $false)][string[]]$Categories = @(),
+    [Parameter(Mandatory = $false)][string]$DeleteOldFolderName = ""
 )
 
 # Parameter validation
@@ -413,11 +416,20 @@ else {
 foreach ($MailboxTarget in $MailboxTargets) {
     try {
         Write-DebugLog "[$MailboxTarget] Syncing Managed Contacts"
+        if ($DeleteOldFolderName) {
+            $OldFolder = Get-MgUserContactFolder -UserId $MailboxTarget -Filter "DisplayName eq '$DeleteOldFolderName'"
+             if ($OldFolder) {
+                 Write-DebugLog    "[$MailboxTarget] Deleting old contact folder: $DeleteOldFolderName"
+                Remove-MgUserContactFolder -UserId $MailboxTarget -ContactFolderId $OldFolder.Id
+             }
+        }
+        
         Sync-ManagedContacts -Mailbox $MailboxTarget -ManagedContactFolderName $ManagedContactFolderName -ManagedContacts $CombinedContactList -FileAsFormat $FileAsFormat -Categories $Categories
     }
     catch {
         Write-ErrorLog "Error syncing Managed Contacts for Mailbox: $MailboxTarget Exception: $_.Exception"
     }
+    
 }
 
 Disconnect-MgGraph
