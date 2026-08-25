@@ -457,12 +457,12 @@ $OrgContactList = Get-MgContact -All -Property `
     <#                                                        #>    Id, DisplayName, GivenName, Surname, CompanyName, JobTitle , Mail, Phones, Addresses
 | Select-Object @{Name = 'EntryType'; Expression = { 'Contact' } }, Id, DisplayName, GivenName, Surname, CompanyName, JobTitle , Mail, Phones, Addresses
 
-$CombinedContactList = $OrgContactList + $UserList 
+$CombinedContactList = @(($OrgContactList + $UserList) | Where-Object { $_ })
 
 # Exclude contacts/users with no phone number on any field
 if ($NoPhoneNumber) {
     $PreFilterCount = $CombinedContactList.Count
-    $CombinedContactList = $CombinedContactList | Where-Object { Test-HasAnyPhoneNumber -Record $_ }
+    $CombinedContactList = @($CombinedContactList | Where-Object { $_ -and (Test-HasAnyPhoneNumber -Record $_) })
     Write-InfoLog "Excluded $($PreFilterCount - $CombinedContactList.Count) contact(s) with no phone number"
 }
 
